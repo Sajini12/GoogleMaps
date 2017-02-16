@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void stopService() {
         SharedPreferenceUtils.setSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,true,this);
 //        doUnbindService();
-        stopService(new Intent(MainActivity.this,GPSTrackerBackgroundService.class));
+        stopService(new Intent(MainActivity.this.getApplicationContext(),GPSTrackerBackgroundService.class));
     }
 
 //    @Override
@@ -176,9 +176,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void startService() {
         SharedPreferenceUtils.setSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,false,this);
-        stopService(new Intent(MainActivity.this,GPSTrackerBackgroundService.class));
+        stopService(new Intent(MainActivity.this.getApplicationContext(),GPSTrackerBackgroundService.class));
 //        doBindService();
-        Intent serviceIntent = new Intent(MainActivity.this,GPSTrackerBackgroundService.class);
+        Intent serviceIntent = new Intent(MainActivity.this.getApplicationContext(),GPSTrackerBackgroundService.class);
         serviceIntent.setFlags(Service.START_STICKY|Service.START_CONTINUATION_MASK);
         startService(serviceIntent);
     }

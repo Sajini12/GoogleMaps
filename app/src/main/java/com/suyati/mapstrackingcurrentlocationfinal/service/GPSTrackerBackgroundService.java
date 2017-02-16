@@ -156,7 +156,6 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
     @Override
     public void onDestroy() {
         Log.d(GPSTrackerBackgroundService.class.getSimpleName(),"onDestroy");
-        super.onDestroy();
         boolean is_stopped = SharedPreferenceUtils.getSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,this);
         if(is_stopped){
             if (mGoogleApiClient != null) {
@@ -164,6 +163,7 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
                     mGoogleApiClient.disconnect();
             }
         }
+        super.onDestroy();
     }
 
     @Override

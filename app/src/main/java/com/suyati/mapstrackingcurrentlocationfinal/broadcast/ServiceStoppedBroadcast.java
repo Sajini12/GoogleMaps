@@ -18,5 +18,7 @@ public class ServiceStoppedBroadcast extends BroadcastReceiver{
     public void onReceive(Context context, Intent intent) {
         Log.d(GPSTrackerBackgroundService.class.getSimpleName(),"onReceive");
         Toast.makeText(context,"Service Stopped",Toast.LENGTH_SHORT).show();
+        context.stopService(new Intent(context.getApplicationContext(),GPSTrackerBackgroundService.class));
+        context.startService(new Intent(context.getApplicationContext(),GPSTrackerBackgroundService.class));
     }
 }
