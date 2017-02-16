@@ -28,12 +28,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".alerts.AlertForBroadcastReceiver"/>
+        <!--android:excludeFromRecents="true"--> this is used in the activity tag so that
+        the activity doesnt appear in the recent app list, moreover no objects are kept remaining
+        when the app is closed
+        <activity android:name=".alerts.AlertForBroadcastReceiver"
+            android:theme="@style/Theme.Transparent"/>
         <service
             android:name=".service.GPSTrackerBackgroundService"
             android:enabled="true"
             android:exported="true" />
-
+        <!--android:process=":remote"--> this cannot be used if communication needs to happen with the activity
+        <receiver
+            android:name=".broadcast.ServiceStoppedBroadcast">
+            <intent-filter>
+                <action android:name="com.suyati.mapstrackingcurrentlocationfinal.ServiceStoppedBroadcast" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".broadcast.GPSBroadcastReceiver"
             android:enabled="true"

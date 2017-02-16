@@ -1,20 +1,28 @@
 package com.suyati.mapstrackingcurrentlocationfinal;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,16 +39,10 @@ import com.suyati.mapstrackingcurrentlocationfinal.util.Utilities;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,GPSTrackerBackgroundService.ImapsValues{
 
     private static final int REQUEST_PERMISSION = 0;
+    private static final Object NOTIFICATION_ID = 102;
 
     private GPSTrackerBackgroundService mBoundService;
     private GoogleMap mMap;
-
-    private GoogleMap getmMap(){
-        return this.mMap;
-    }
-    private void setmMap(GoogleMap map){
-        this.mMap = map;
-    }
 
 //    public BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
 //        @Override
@@ -78,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        }
 //    };
 //    private boolean mIsBound = false;
-    private LocationManager mLocationManager;
+//    private LocationManager mLocationManager;
 
 //    void doBindService() {
 //        // Establish a connection with the service.  We use an explicit
@@ -124,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void stopService() {
         SharedPreferenceUtils.setSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,true,this);
+//        doUnbindService();
         stopService(new Intent(MainActivity.this,GPSTrackerBackgroundService.class));
     }
 
@@ -174,11 +177,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void startService() {
         SharedPreferenceUtils.setSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,false,this);
         stopService(new Intent(MainActivity.this,GPSTrackerBackgroundService.class));
+//        doBindService();
         Intent serviceIntent = new Intent(MainActivity.this,GPSTrackerBackgroundService.class);
-        serviceIntent.setFlags(Service.START_STICKY);
+        serviceIntent.setFlags(Service.START_STICKY|Service.START_CONTINUATION_MASK);
         startService(serviceIntent);
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
