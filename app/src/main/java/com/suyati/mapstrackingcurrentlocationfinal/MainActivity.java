@@ -39,9 +39,8 @@ import com.suyati.mapstrackingcurrentlocationfinal.util.Utilities;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,GPSTrackerBackgroundService.ImapsValues{
 
     private static final int REQUEST_PERMISSION = 0;
-    private static final Object NOTIFICATION_ID = 102;
 
-    private GPSTrackerBackgroundService mBoundService;
+//    private GPSTrackerBackgroundService mBoundService;
     private GoogleMap mMap;
 
 //    public BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -146,7 +145,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
         Utilities utilities = new Utilities(this);
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -164,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                gps calling method
                 if(utilities.checkLocation())
 //                    doBindService();
-                startService();
+                    startService();
             }
         }else{
             if(utilities.checkLocation())
@@ -179,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         stopService(new Intent(MainActivity.this.getApplicationContext(),GPSTrackerBackgroundService.class));
 //        doBindService();
         Intent serviceIntent = new Intent(MainActivity.this.getApplicationContext(),GPSTrackerBackgroundService.class);
-        serviceIntent.setFlags(Service.START_STICKY|Service.START_CONTINUATION_MASK);
+        serviceIntent.setFlags(Service.START_NOT_STICKY);
         startService(serviceIntent);
     }
 

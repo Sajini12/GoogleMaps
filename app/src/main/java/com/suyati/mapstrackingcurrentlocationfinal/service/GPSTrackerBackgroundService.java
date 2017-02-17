@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -54,6 +55,8 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
     private static final int NOTIFICATION_ID = 102;
     private GoogleApiClient mGoogleApiClient;
     private LatLng latLng;
+    Location mLocation;
+    LocationRequest mLocationRequest;
 
     ImapsValues iMaps;
 
@@ -153,14 +156,23 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
 //        startForeground(NOTIFICATION_ID, notification);
 //
 //    }
+
     @Override
     public void onDestroy() {
         Log.d(GPSTrackerBackgroundService.class.getSimpleName(),"onDestroy");
         boolean is_stopped = SharedPreferenceUtils.getSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,this);
         if(is_stopped){
             if (mGoogleApiClient != null) {
-                if (mGoogleApiClient.isConnected())
+                if (mGoogleApiClient.isConnected()) {
                     mGoogleApiClient.disconnect();
+                }
+            }
+        }else{
+            if(mGoogleApiClient != null) {
+                if (mGoogleApiClient.isConnected()) {
+                    mGoogleApiClient.disconnect();
+                }
+                mGoogleApiClient = null;
             }
         }
         super.onDestroy();
@@ -215,6 +227,7 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
 //        }
 //        return super.onUnbind(intent);
 //    }
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(GPSTrackerBackgroundService.class.getSimpleName(),"On Connected");
@@ -230,7 +243,7 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        Location mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
         if(mLocation == null){
             startLocationUpdates();

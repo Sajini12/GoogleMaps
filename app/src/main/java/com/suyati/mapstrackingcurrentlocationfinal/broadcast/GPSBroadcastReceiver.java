@@ -32,7 +32,7 @@ public class GPSBroadcastReceiver extends BroadcastReceiver {
         SharedPreferenceUtils.setSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,false,context);
         context.stopService(new Intent(context,GPSTrackerBackgroundService.class));
         Intent serviceIntent = new Intent(context,GPSTrackerBackgroundService.class);
-        serviceIntent.setFlags(Service.START_STICKY);
+        serviceIntent.setFlags(Service.START_NOT_STICKY);
         context.startService(serviceIntent);
     }
 }
