@@ -161,19 +161,13 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
     public void onDestroy() {
         Log.d(GPSTrackerBackgroundService.class.getSimpleName(),"onDestroy");
         boolean is_stopped = SharedPreferenceUtils.getSharedPrefBoolean(SharedPrefConstants.SERVICE_IS_STOPPED,this);
-        if(is_stopped){
-            if (mGoogleApiClient != null) {
-                if (mGoogleApiClient.isConnected()) {
-                    mGoogleApiClient.disconnect();
-                }
+        if (mGoogleApiClient != null) {
+            if (mGoogleApiClient.isConnected()) {
+                mGoogleApiClient.disconnect();
             }
-        }else{
-            if(mGoogleApiClient != null) {
-                if (mGoogleApiClient.isConnected()) {
-                    mGoogleApiClient.disconnect();
-                }
-                mGoogleApiClient = null;
-            }
+        }
+        if(!is_stopped) {
+            mGoogleApiClient = null;
         }
         super.onDestroy();
     }
@@ -252,10 +246,8 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
 
             latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
             setLatLng(latLng);
-            // mLatitudeTextView.setText(String.valueOf(mLocation.getLatitude()));
-            //mLongitudeTextView.setText(String.valueOf(mLocation.getLongitude()));
         } else {
-            Toast.makeText(this, "Location not Detected", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Waiting for location...", Toast.LENGTH_SHORT).show();
         }
     }
     @Override

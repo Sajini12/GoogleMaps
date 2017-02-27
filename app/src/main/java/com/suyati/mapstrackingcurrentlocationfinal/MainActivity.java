@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,20 +30,35 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.suyati.mapstrackingcurrentlocationfinal.constants.SharedPrefConstants;
 import com.suyati.mapstrackingcurrentlocationfinal.service.GPSTrackerBackgroundService;
 import com.suyati.mapstrackingcurrentlocationfinal.util.SharedPreferenceUtils;
 import com.suyati.mapstrackingcurrentlocationfinal.util.Utilities;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static android.R.attr.radius;
+import static com.suyati.mapstrackingcurrentlocationfinal.R.id.map;
+
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,GPSTrackerBackgroundService.ImapsValues{
 
     private static final int REQUEST_PERMISSION = 0;
+    public static final double RADIUS_OF_EARTH_METERS = 6371009;
+    private static final double DEFAULT_RADIUS = 5000;
 
-//    private GPSTrackerBackgroundService mBoundService;
+    //    private GPSTrackerBackgroundService mBoundService;
     private GoogleMap mMap;
+
+    public Circle circle;
+    private Marker centerMarker;
 
 //    public BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
 //        @Override
@@ -103,6 +120,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        }
 //    }
 
+//   region for showing radius
+
+    public void drawCircleRadius(LatLng center, double radius, boolean clickable,float stroke_width, int stroke_color, int fill_color) {
+        centerMarker = mMap.addMarker(new MarkerOptions()
+                .title("Your Current location")
+                .position(center)
+                .draggable(true));
+//        radiusMarker = mMap.addMarker(new MarkerOptions()
+//                .position(toRadiusLatLng(center, radius))
+//                .draggable(true)
+//                .icon(BitmapDescriptorFactory.defaultMarker(
+//                        BitmapDescriptorFactory.HUE_AZURE)));
+        circle = mMap.addCircle(new CircleOptions()
+                .center(center)
+                .radius(radius)
+                .strokeWidth(stroke_width)
+                .strokeColor(stroke_color)
+                .fillColor(fill_color)
+                .clickable(clickable));
+    }
+//    endregion
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -143,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                .findFragmentById(map);
         mapFragment.getMapAsync(this);
     }
 
@@ -233,20 +272,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        try {
-            // Customise the styling of the base map using a JSON object defined
-            // in a raw resource file.
-            boolean success = googleMap.setMapStyle(
-                    MapStyleOptions.loadRawResourceStyle(
-                            this, R.raw.style_json));
-
-            if (!success) {
-//                Log.e(TAG, "Style parsing failed.");
-            }
-        } catch (Resources.NotFoundException e) {
-//            Log.e(TAG, "Can't find style. Error: ", e);
-        }
+//        try {
+//            // Customise the styling of the base map using a JSON object defined
+//            // in a raw resource file.
+//            boolean success = googleMap.setMapStyle(
+//                    MapStyleOptions.loadRawResourceStyle(
+//                            this, R.raw.style_json));
+//
+//            if (!success) {
+////                Log.e(TAG, "Style parsing failed.");
+//            }
+//        } catch (Resources.NotFoundException e) {
+////            Log.e(TAG, "Can't find style. Error: ", e);
+//        }
         mMap = googleMap;
+
         MapsVariableSingleton mapsVariableSingleton = MapsVariableSingleton.getInstance();
         mapsVariableSingleton.setMaps(mMap);
     }
@@ -266,10 +306,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void AddMarkertoMap(LatLng latlng){
-        // Add a marker in Sydney and move the camera
+        // Add a marker and move the camera
         mMap.clear();
-        mMap.addMarker(new MarkerOptions().position(latlng).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney,18.0f));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,17.0f));
+        int mFillColor = Color.parseColor("#80CCCCFE");
+        int mStrokeColor = Color.BLACK;
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng,12.5f));
+//        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,12.5f));
+
+        drawCircleRadius(latlng,DEFAULT_RADIUS,false,2.00f,mStrokeColor,mFillColor);
     }
 }
