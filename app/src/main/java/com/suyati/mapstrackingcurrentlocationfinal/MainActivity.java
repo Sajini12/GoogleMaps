@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
@@ -18,6 +19,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
@@ -37,7 +41,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.suyati.mapstrackingcurrentlocationfinal.constants.SharedPrefConstants;
+import com.suyati.mapstrackingcurrentlocationfinal.data.MapsContractClass;
 import com.suyati.mapstrackingcurrentlocationfinal.service.GPSTrackerBackgroundService;
 import com.suyati.mapstrackingcurrentlocationfinal.util.SharedPreferenceUtils;
 import com.suyati.mapstrackingcurrentlocationfinal.util.Utilities;
@@ -48,7 +55,7 @@ import java.util.List;
 import static android.R.attr.radius;
 import static com.suyati.mapstrackingcurrentlocationfinal.R.id.map;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,GPSTrackerBackgroundService.ImapsValues{
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,GPSTrackerBackgroundService.ImapsValues,LoaderManager.LoaderCallbacks<Cursor>{
 
     private static final int REQUEST_PERMISSION = 0;
     public static final double RADIUS_OF_EARTH_METERS = 6371009;
@@ -59,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public Circle circle;
     private Marker centerMarker;
+    PolylineOptions options;
+
+    private int LOADER_ID = 2;
 
 //    public BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
 //        @Override
@@ -184,6 +194,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        getSupportLoaderManager().initLoader(LOADER_ID,null,this);
     }
 
     @Override
@@ -314,5 +325,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,12.5f));
 
         drawCircleRadius(latlng,DEFAULT_RADIUS,false,2.00f,mStrokeColor,mFillColor);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(MainActivity.this,
+                MapsContractClass.LatLngWithTime.CONTENT_URI,
+                null,
+                null,
+                null,
+                MapsContractClass.LatLngWithTime._ID+" DESC ");
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        options = new PolylineOptions();
+        data.moveToFirst();
+        while (!data.isAfterLast()){
+            int radius = 5;
+            LatLng latLng = new LatLng(Double.parseDouble(data.getString(1))+radius,Double.parseDouble(data.getString(2))+radius);
+            options.add(latLng);
+            data.moveToNext();
+        }
+        if(mMap != null) {
+            int color = Color.BLACK;
+            Polyline mMutablePolyline = mMap.addPolyline(options
+                    .color(color)
+                    .width(5)
+                    .clickable(false));
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }
