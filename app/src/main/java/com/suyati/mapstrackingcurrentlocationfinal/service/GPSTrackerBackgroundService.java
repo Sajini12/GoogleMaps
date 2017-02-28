@@ -2,30 +2,23 @@ package com.suyati.mapstrackingcurrentlocationfinal.service;
 
 import android.Manifest;
 import android.app.AlarmManager;
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.SystemClock;
-import android.provider.Settings;
-import android.renderscript.RenderScript;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -33,17 +26,20 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.suyati.mapstrackingcurrentlocationfinal.MainActivity;
-import com.suyati.mapstrackingcurrentlocationfinal.R;
-import com.suyati.mapstrackingcurrentlocationfinal.broadcast.ServiceStoppedBroadcast;
 import com.suyati.mapstrackingcurrentlocationfinal.constants.SharedPrefConstants;
+import com.suyati.mapstrackingcurrentlocationfinal.data.MapsContractClass;
+import com.suyati.mapstrackingcurrentlocationfinal.util.DateTimeUtility;
 import com.suyati.mapstrackingcurrentlocationfinal.util.SharedPreferenceUtils;
 
-import static android.R.attr.foreground;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 import static android.icu.lang.UCharacter.GraphemeClusterBreak.L;
 
 public class GPSTrackerBackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks,
@@ -51,12 +47,12 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
         com.google.android.gms.location.LocationListener{
 
     private static final long UPDATE_INTERVAL = 1000;
-    private static final long FASTEST_INTERVAL = 0;
-    private static final int NOTIFICATION_ID = 102;
+    private static final long FASTEST_INTERVAL = 30000;
     private GoogleApiClient mGoogleApiClient;
     private LatLng latLng;
     Location mLocation;
     LocationRequest mLocationRequest;
+
 
     ImapsValues iMaps;
 
@@ -268,12 +264,101 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
                 Double.toString(location.getLatitude()) + "," +
                 Double.toString(location.getLongitude());
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        insertDataToLatLngTable(location);
         // You can now create a LatLng Object for use with maps
         Log.d(GPSTrackerBackgroundService.class.getSimpleName(),msg);
         latLng = new LatLng(location.getLatitude(), location.getLongitude());
         setLatLng(latLng);
     }
-//    private void ensureServiceStaysRunning() {
+
+    private void insertDataToLatLngTable(Location location) {
+
+        Calendar myCalendar = Calendar.getInstance();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MapsContractClass.LatLngWithTime.LATITUDE,location.getLatitude());
+        contentValues.put(MapsContractClass.LatLngWithTime.LONGITUDE,location.getLongitude());
+
+        SimpleDateFormat simpledatefo = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat simpletimefo = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date newDate = new Date();
+        String expectedDate= simpledatefo.format(newDate);
+        String expectedTime= simpletimefo.format(newDate);
+
+        contentValues.put(MapsContractClass.LatLngWithTime.DATE, expectedDate);
+        contentValues.put(MapsContractClass.LatLngWithTime.TIME, expectedTime);
+
+        List<Address> addresses = getAddressfromGeoLocation(location);
+        putAddressValues(addresses,contentValues);
+
+        Cursor cursor = null;
+
+        try{
+            cursor = getContentResolver().query(MapsContractClass.LatLngWithTime.CONTENT_URI,
+                    new String[]{MapsContractClass.LatLngWithTime.TIME},
+                    null,
+                    null,
+                    MapsContractClass.LatLngWithTime._ID+" DESC LIMIT 1");
+            if(cursor.moveToFirst()){
+                Date cursortime = DateTimeUtility.getOnlyTimeHour(cursor.getString(0));
+                Date currenttime = DateTimeUtility.getOnlyTimeHour(expectedTime);
+                if(cursortime.compareTo(currenttime)<0){
+                    contentValues.put(MapsContractClass.LatLngWithTime.IS_AN_HOUR,1);
+                }else{
+                    contentValues.put(MapsContractClass.LatLngWithTime.IS_AN_HOUR,0);
+                }
+            }else {
+                contentValues.put(MapsContractClass.LatLngWithTime.IS_AN_HOUR,1);
+            }
+            contentValues.put(MapsContractClass.LatLngWithTime.IS_A_STOP,0);
+        }catch (Exception e){
+            if(cursor != null){
+                cursor.close();
+                cursor = null;
+            }
+        }finally {
+            if(cursor != null){
+                cursor.close();
+                cursor = null;
+            }
+        }
+        getContentResolver().insert(MapsContractClass.LatLngWithTime.CONTENT_URI,contentValues);
+    }
+
+    private void putAddressValues(List<Address> addresses, ContentValues contentValues) {
+        String address = addresses.get(0).getAddressLine(0); // If any additional address line present then only, check with max available address lines by getMaxAddressLineIndex()
+        contentValues.put(MapsContractClass.LatLngWithTime.ADDRESS,address);
+
+        String city = addresses.get(0).getLocality();
+        contentValues.put(MapsContractClass.LatLngWithTime.CITY,city);
+
+        String state = addresses.get(0).getAdminArea();
+        contentValues.put(MapsContractClass.LatLngWithTime.STATE,state);
+
+        String country = addresses.get(0).getCountryName();
+        contentValues.put(MapsContractClass.LatLngWithTime.COUNTRY,country);
+
+        String postalCode = addresses.get(0).getPostalCode();
+        contentValues.put(MapsContractClass.LatLngWithTime.POSTAL_CODE,postalCode);
+
+        String knownName = addresses.get(0).getFeatureName(); // Only if available else return NULL
+        contentValues.put(MapsContractClass.LatLngWithTime.KNOWN_NAME,knownName);
+    }
+
+    private List<Address> getAddressfromGeoLocation(Location location) {
+        Geocoder geocoder;
+        List<Address> addresses = null;
+        geocoder = new Geocoder(this, Locale.getDefault());
+
+        try {
+            addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return addresses;
+    }
+
+    //    private void ensureServiceStaysRunning() {
 //        // KitKat appears to have (in some cases) forgotten how to honor START_STICKY
 //        // and if the service is killed, it doesn't restart.  On an emulator & AOSP device, it restarts...
 //        // on my CM device, it does not - WTF?  So, we'll make sure it gets back

@@ -38,13 +38,19 @@ public class MapsDatabaseHelper extends SQLiteOpenHelper{
     public void onCreate(SQLiteDatabase db) {
 
         final String SQL_CREATE_LATLNG_WITH_TIME_TABLE = "CREATE TABLE " + MapsContractClass.LatLngWithTime.TABLE_NAME + " (" +
-                MapsContractClass.LatLngWithTime._ID + " INTEGER PRIMARY KEY," +
+                MapsContractClass.LatLngWithTime._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 MapsContractClass.LatLngWithTime.LATITUDE + " REAL NOT NULL, " +
                 MapsContractClass.LatLngWithTime.LONGITUDE + " REAL NOT NULL, " +
-                MapsContractClass.LatLngWithTime.ADDRESS + " TEXT NOT NULL, " +
-                MapsContractClass.LatLngWithTime.IS_AN_HOUR + " NUMERIC NOT NULL, " +
-                MapsContractClass.LatLngWithTime.DATE + " NUMERIC NOT NULL, " +
-                MapsContractClass.LatLngWithTime.TIME + " NUMERIC NOT NULL " +
+                MapsContractClass.LatLngWithTime.ADDRESS + " TEXT NULL, " +
+                MapsContractClass.LatLngWithTime.CITY + " TEXT NULL, " +
+                MapsContractClass.LatLngWithTime.STATE + " TEXT NULL, " +
+                MapsContractClass.LatLngWithTime.COUNTRY + " TEXT NULL, " +
+                MapsContractClass.LatLngWithTime.POSTAL_CODE + " TEXT NULL, " +
+                MapsContractClass.LatLngWithTime.KNOWN_NAME + " TEXT NULL, " +
+                MapsContractClass.LatLngWithTime.IS_AN_HOUR + " NUMERIC NULL, " +
+                MapsContractClass.LatLngWithTime.IS_A_STOP + " NUMERIC NULL, " +
+                MapsContractClass.LatLngWithTime.DATE + " NUMERIC NULL, " +
+                MapsContractClass.LatLngWithTime.TIME + " NUMERIC NULL " +
                 " );";
 
         db.execSQL(SQL_CREATE_LATLNG_WITH_TIME_TABLE);

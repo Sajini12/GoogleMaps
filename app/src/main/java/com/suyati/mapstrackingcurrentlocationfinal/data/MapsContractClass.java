@@ -22,7 +22,13 @@ public class MapsContractClass {
         public static String LONGITUDE = "longitude";
         public static String TIME = "time";
         public static String ADDRESS = "address";
+        public static String CITY = "city";
+        public static String STATE = "state";
+        public static String COUNTRY = "country";
+        public static String POSTAL_CODE = "postal_code";
+        public static String KNOWN_NAME = "known_name";
         public static String IS_AN_HOUR = "is_an_hour";
+        public static String IS_A_STOP = "is_a_stop";
         public static String DATE ="date";
 
         //setting content uri path
