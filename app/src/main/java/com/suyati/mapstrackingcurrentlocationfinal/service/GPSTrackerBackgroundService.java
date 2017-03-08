@@ -2,6 +2,8 @@ package com.suyati.mapstrackingcurrentlocationfinal.service;
 
 import android.Manifest;
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentValues;
@@ -19,6 +21,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -28,6 +31,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.suyati.mapstrackingcurrentlocationfinal.MainActivity;
+import com.suyati.mapstrackingcurrentlocationfinal.R;
 import com.suyati.mapstrackingcurrentlocationfinal.constants.SharedPrefConstants;
 import com.suyati.mapstrackingcurrentlocationfinal.data.MapsContractClass;
 import com.suyati.mapstrackingcurrentlocationfinal.util.DateTimeUtility;
@@ -48,10 +52,12 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
 
     private static final long UPDATE_INTERVAL = 1000;
     private static final long FASTEST_INTERVAL = 30000;
+    private static final int NOTIFICATION_ID = 100;
     private GoogleApiClient mGoogleApiClient;
     private LatLng latLng;
     Location mLocation;
     LocationRequest mLocationRequest;
+    Notification notification;
 
 
     ImapsValues iMaps;
@@ -102,7 +108,7 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(GPSTrackerBackgroundService.class.getSimpleName(),"OnStartCalled");
         initializeGoogleApiObj();
-//        runAsForeground(); //runs the service as foreground with notification icon
+        runAsForeground(); //runs the service as foreground with notification icon
 //        return START_STICKY; START_STICKY has a bug from KITKAT and above,
         return START_NOT_STICKY;
 // for reference http://stackoverflow.com/a/20735519/3409734
@@ -138,20 +144,21 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
     }
 
 
-    //    private void runAsForeground(){
-//        Intent notificationIntent = new Intent(this, GPSTrackerBackgroundService.class);
-//        PendingIntent pendingIntent=PendingIntent.getActivity(this, 0,
-//                notificationIntent,PendingIntent.FLAG_ONE_SHOT);
-//
-//        Notification notification=new NotificationCompat.Builder(this)
-//                .setPriority(1)
-//                .setAutoCancel(false)
-//                .setSmallIcon(R.mipmap.ic_launcher)
-//                .setContentText(getString(R.string.is_tracking))
-//                .setContentIntent(pendingIntent).build();
-//        startForeground(NOTIFICATION_ID, notification);
-//
-//    }
+        private void runAsForeground(){
+        Intent notificationIntent = new Intent(this, GPSTrackerBackgroundService.class);
+        PendingIntent pendingIntent=PendingIntent.getActivity(this, 0,
+                notificationIntent,PendingIntent.FLAG_ONE_SHOT);
+
+        notification=new NotificationCompat.Builder(this)
+                .setPriority(1)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentText(getString(R.string.is_tracking))
+                .setContentIntent(pendingIntent).build();
+        startForeground(NOTIFICATION_ID, notification);
+
+    }
 
     @Override
     public void onDestroy() {
@@ -165,6 +172,8 @@ public class GPSTrackerBackgroundService extends Service implements GoogleApiCli
         if(!is_stopped) {
             mGoogleApiClient = null;
         }
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(NOTIFICATION_ID);
         super.onDestroy();
     }
 
